@@ -13,7 +13,6 @@ import {
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path } from "react-native-svg";
 import SliderInput from "./SliderInput";
 import { colors as C, fonts, gradient } from "./design/theme";
 import { figmaAssets } from "./design/assets";
@@ -332,76 +331,6 @@ export function Header({
     </View>
   );
 }
-export function StatusPreview({ dark = false }: { dark?: boolean }) {
-  if (Platform.OS !== "web") return null;
-  const color = dark ? "#000" : "#fff";
-  return (
-    <View
-      style={{
-        height: 43,
-        paddingHorizontal: 42,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-      accessibilityElementsHidden
-    >
-      <TextLabel
-        weight="semibold"
-        style={{ color, fontSize: 17, lineHeight: 22 }}
-      >
-        9:41
-      </TextLabel>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-        <View style={{ flexDirection: "row", gap: 2, alignItems: "flex-end" }}>
-          {[4, 7, 10, 13].map((h) => (
-            <View
-              key={h}
-              style={{
-                width: 3,
-                height: h,
-                borderRadius: 1,
-                backgroundColor: color,
-              }}
-            />
-          ))}
-        </View>
-        <Svg width={17} height={14} viewBox="0 0 17 14">
-          <Path
-            d="M1 4.5C5 1 12 1 16 4.5M4 7.5C7 5.3 10 5.3 13 7.5M7 10.5C8 9.8 9 9.8 10 10.5"
-            stroke={color}
-            strokeWidth={2.4}
-            fill="none"
-            strokeLinecap="round"
-          />
-        </Svg>
-        <View
-          style={{
-            width: 25,
-            height: 12,
-            borderWidth: 1,
-            borderColor: `${color}99`,
-            borderRadius: 3,
-            padding: 1,
-          }}
-        >
-          <View style={{ backgroundColor: color, flex: 1, borderRadius: 2 }} />
-          <View
-            style={{
-              position: "absolute",
-              right: -3,
-              top: 3,
-              width: 2,
-              height: 4,
-              borderRadius: 1,
-              backgroundColor: color,
-            }}
-          />
-        </View>
-      </View>
-    </View>
-  );
-}
 export function BottomBar({ active = "home" }: { active?: Route }) {
   const { go } = useApp();
   const navNode =
@@ -435,8 +364,9 @@ export function BottomBar({ active = "home" }: { active?: Route }) {
             s.navItem,
             {
               position: "absolute",
+              top: 12,
               width: 64,
-              height: 45,
+              height: 48,
               left: `${[10.7, 27.9, 50, 73.1, 90.8][i]}%`,
               marginLeft: -32,
             },
@@ -476,29 +406,22 @@ export function Page({
   dark = false,
   style,
   scroll = true,
-  map = false,
 }: React.PropsWithChildren<{
   nav?: Route;
   dark?: boolean;
   style?: StyleProp<ViewStyle>;
   scroll?: boolean;
-  map?: boolean;
 }>) {
   const insets = useSafeAreaInsets();
-  const bottom = Platform.OS === "web" ? 34 : Math.max(insets.bottom, 12);
+  const bottom = Platform.OS === "web" ? 0 : insets.bottom;
   return (
     <View
       style={{
         flex: 1,
-        backgroundColor: dark ? C.navy : "white",
+        backgroundColor: nav === "map" ? "#eef2f4" : C.navy,
         paddingTop: Platform.OS === "web" ? 0 : insets.top,
       }}
     >
-      {!map && (
-        <View style={{ backgroundColor: C.navy }}>
-          <StatusPreview />
-        </View>
-      )}
       {scroll ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -518,22 +441,8 @@ export function Page({
         style={{
           height: bottom,
           backgroundColor: nav || dark ? C.navy : "white",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          paddingBottom: Platform.OS === "web" ? 8 : 0,
         }}
-      >
-        {Platform.OS === "web" && (
-          <View
-            style={{
-              width: 144,
-              height: 5,
-              borderRadius: 4,
-              backgroundColor: dark || nav ? "white" : "black",
-            }}
-          />
-        )}
-      </View>
+      />
     </View>
   );
 }
@@ -570,7 +479,7 @@ export const s = StyleSheet.create({
   },
   pad: { paddingHorizontal: 16 },
   nav: {
-    height: 46,
+    height: 74,
     flexDirection: "row",
     backgroundColor: C.navy,
     borderTopWidth: 1,

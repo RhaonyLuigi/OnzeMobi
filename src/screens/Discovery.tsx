@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Page, Art, TextLabel as T, StatusPreview, s } from "../components";
+import { Page, Art, TextLabel as T, s } from "../components";
 import { colors as C, fonts } from "../design/theme";
 import { useApp, stations } from "../state";
 import { StationRow } from "./Main";
@@ -71,7 +71,7 @@ export function MapScreen() {
     v.name.toLowerCase().includes(search.toLowerCase()),
   );
   return (
-    <Page nav="map" map scroll={false}>
+    <Page nav="map" scroll={false}>
       <View style={{ flex: 1, overflow: "hidden", backgroundColor: "#eef2f4" }}>
         <Art
           node={node}
@@ -85,11 +85,10 @@ export function MapScreen() {
             top: geometry[1] * k,
           }}
         />
-        <StatusPreview dark />
         <View
           style={[
             s.row,
-            { height: 40, marginTop: 11, marginHorizontal: 20, gap: 16 },
+            { height: 40, marginTop: 20, marginHorizontal: 20, gap: 16 },
           ]}
         >
           <Pressable

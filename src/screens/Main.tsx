@@ -21,10 +21,12 @@ export function StationRow({
   index = 0,
   onPress,
   compact = false,
+  spacious = false,
 }: {
   index?: number;
   onPress: () => void;
   compact?: boolean;
+  spacious?: boolean;
 }) {
   const names = ["Taguatinga Shopping", "Estacionamento Assaí", "Trade Center"];
   const available = [4, 2, 1],
@@ -34,7 +36,7 @@ export function StationRow({
       accessibilityRole="button"
       accessibilityLabel={names[index]}
       onPress={onPress}
-      style={[m.station, { height: 57 }]}
+      style={[m.station, { height: spacious ? 72 : 57 }]}
     >
       <Art
         node="139:426"
@@ -65,7 +67,7 @@ export function StationRow({
             color: "#000",
             fontSize: 12,
             lineHeight: 15,
-            letterSpacing: 1.08,
+            letterSpacing: spacious ? 0.2 : 1.08,
           }}
         >
           {names[index]}
@@ -112,38 +114,30 @@ function HomeSimulation() {
   const app = useApp();
   const selected = app.selected;
   return (
-    <View style={m.simulation}>
-      <View style={[s.row, { height: 123, marginTop: 8 }]}>
-        <View
-          style={{
-            width: 107,
-            height: 113,
-            justifyContent: "center",
-            alignItems: "center",
-            borderRightWidth: 1,
-            borderColor: C.border,
-          }}
-        >
-          <View style={{ width: 99, height: 99, alignItems: "center" }}>
-            <Art name="imgEllipse2" w={99} style={StyleSheet.absoluteFill} />
-            <Art
-              name="imgEllipse1"
-              w={4}
-              h={5.983}
-              style={{ position: "absolute", left: 47.5, top: 0 }}
-            />
-            <Art name="imgImage9" w={26} h={33} style={{ marginTop: 17 }} />
-            <T weight="semibold" style={{ color: "#000", fontSize: 15 }}>
-              {selected ? selected.battery : "--"}%
-            </T>
-            <T style={{ color: "#3c3c3c", fontSize: 10, lineHeight: 12 }}>
-              Bateria atual
-            </T>
-          </View>
+    <View style={[m.simulation, { padding: 14 }]}>
+      <View style={[s.row, { gap: 22 }]}>
+        <View style={{ width: 99, height: 99, alignItems: "center" }}>
+          <Art name="imgEllipse2" w={99} style={StyleSheet.absoluteFill} />
+          <Art
+            name="imgEllipse1"
+            w={4}
+            h={5.983}
+            style={{ position: "absolute", left: 47.5, top: 0 }}
+          />
+          <Art name="imgImage9" w={26} h={33} style={{ marginTop: 17 }} />
+          <T weight="semibold" style={{ color: "#000", fontSize: 15 }}>
+            {selected ? selected.battery : "--"}%
+          </T>
+          <T style={{ color: "#3c3c3c", fontSize: 10, lineHeight: 12 }}>
+            Bateria atual
+          </T>
         </View>
-        <View style={{ flex: 1, paddingLeft: 7 }}>
-          <T style={m.microLabel}>Carga desejada</T>
-          <T weight="semibold" style={{ color: "#000" }}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <T style={{ color: C.gray, fontSize: 12 }}>Carga desejada</T>
+          <T
+            weight="semibold"
+            style={{ color: C.navy, fontSize: 23, lineHeight: 29 }}
+          >
             {selected ? app.target : "--"}%
           </T>
           <Range
@@ -157,60 +151,43 @@ function HomeSimulation() {
             }}
             size={16}
           />
-          <View
-            style={{ height: 1, backgroundColor: C.border, marginVertical: 2 }}
-          />
-          <View style={[s.row, { height: 61 }]}>
-            <View
-              style={[
-                s.row,
-                { flex: 1, alignItems: "flex-start", paddingRight: 4 },
-              ]}
-            >
-              <Art
-                name="imgIcon1"
-                w={18.25}
-                h={20.83}
-                style={{ marginTop: 3, marginRight: 6 }}
-              />
-              <View>
-                <T style={[m.microLabel, { width: 68 }]}>Energia necessária</T>
-                <View style={s.row}>
-                  <T weight="semibold" style={{ color: "#000", fontSize: 15 }}>
-                    {selected ? decimal(app.energy) : "--"}kWh
-                  </T>
-                  <Art name="imgIcon" w={10} h={6} style={{ marginLeft: 4 }} />
-                </View>
-              </View>
+        </View>
+      </View>
+      <View
+        style={{ height: 1, backgroundColor: "#e4eef7", marginVertical: 14 }}
+      />
+      <View style={[s.row, { gap: 16 }]}>
+        <View style={[s.row, { flex: 1, alignItems: "center" }]}>
+          <Art name="imgIcon1" w={18.25} h={20.83} style={{ marginRight: 8 }} />
+          <View>
+            <T style={m.microLabel}>Energia necessária</T>
+            <View style={[s.row, { marginTop: 5 }]}>
+              <T weight="semibold" style={{ color: "#000", fontSize: 15 }}>
+                {selected ? decimal(app.energy) : "--"} kWh
+              </T>
             </View>
-            <View
-              style={[
-                s.row,
-                {
-                  borderLeftWidth: 1,
-                  borderColor: C.border,
-                  flex: 1,
-                  paddingLeft: 6,
-                  alignItems: "flex-start",
-                },
-              ]}
+          </View>
+        </View>
+        <View
+          style={[
+            s.row,
+            {
+              borderLeftWidth: 1,
+              borderColor: C.border,
+              flex: 1,
+              paddingLeft: 14,
+            },
+          ]}
+        >
+          <Art name="imgIcon2" w={17} h={18} style={{ marginRight: 8 }} />
+          <View>
+            <T style={m.microLabel}>Tempo estimado</T>
+            <T
+              weight="semibold"
+              style={{ color: "#000", marginTop: 5, fontSize: 15 }}
             >
-              <Art
-                name="imgIcon2"
-                w={17}
-                h={18}
-                style={{ marginRight: 8, marginTop: 3 }}
-              />
-              <View>
-                <T style={[m.microLabel, { width: 68 }]}>Tempo estimado</T>
-                <T
-                  weight="semibold"
-                  style={{ color: "#000", marginTop: 3, fontSize: 15 }}
-                >
-                  ~ {selected ? app.minutes : "--"} min
-                </T>
-              </View>
-            </View>
+              ~ {selected ? app.minutes : "--"} min
+            </T>
           </View>
         </View>
       </View>
@@ -221,19 +198,18 @@ function HomeSimulation() {
         style={[
           s.row,
           {
-            height: 41,
-            marginHorizontal: 12,
+            minHeight: 48,
             backgroundColor: "#e6f3ff",
             borderRadius: 10,
             paddingHorizontal: 13,
-            marginTop: 5,
+            marginTop: 18,
           },
         ]}
       >
         <Art name="imgImage10" w={23} h={30} />
         <T
           weight="semibold"
-          style={{ color: C.ink, fontSize: 15, flex: 1, marginLeft: 9 }}
+          style={{ color: C.ink, fontSize: 13, flex: 1, marginLeft: 9 }}
         >
           Faça agora a sua simulação
         </T>
@@ -245,8 +221,8 @@ function HomeSimulation() {
 function ActiveCharge() {
   const app = useApp();
   return (
-    <View style={[m.simulation, { height: 213 }]}>
-      <View style={[s.between, { paddingHorizontal: 10, paddingTop: 5 }]}>
+    <View style={[m.simulation, { minHeight: 235 }]}>
+      <View style={[s.between, { paddingHorizontal: 14, paddingTop: 14 }]}>
         <SmallHeading>Recarga em andamento</SmallHeading>
         <T style={{ fontSize: 12, color: "#00c887" }}>● Prévia</T>
       </View>
@@ -300,7 +276,7 @@ function ActiveCharge() {
           {
             margin: 12,
             marginTop: 0,
-            height: 41,
+            height: 48,
             borderRadius: 10,
             backgroundColor: "#e6f3ff",
             justifyContent: "center",
@@ -323,7 +299,7 @@ export function HomeScreen() {
       <LinearGradient
         colors={[C.navy, C.navy, "#204f95"]}
         locations={[0, 0.35, 1]}
-        style={{ height: 350, paddingHorizontal: 16 }}
+        style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 }}
       >
         <View style={{ height: 67, alignItems: "center" }}>
           <Art name="imgImage4" w={172} h={69} style={{ marginTop: -2 }} />
@@ -342,7 +318,7 @@ export function HomeScreen() {
             fontSize: 20,
             lineHeight: 24,
             letterSpacing: 1.8,
-            marginTop: 8,
+            marginTop: 16,
           }}
         >
           Olá
@@ -351,7 +327,14 @@ export function HomeScreen() {
             : ""}
           !
         </T>
-        <T style={{ color: "#d4d4d4", fontSize: 14, lineHeight: 17 }}>
+        <T
+          style={{
+            color: "#d4d4d4",
+            fontSize: 14,
+            lineHeight: 20,
+            marginTop: 5,
+          }}
+        >
           Que bom te ver por aqui!
         </T>
         <LinearGradient
@@ -364,7 +347,7 @@ export function HomeScreen() {
           style={{
             height: 202,
             borderRadius: 25,
-            marginTop: 18,
+            marginTop: 24,
             overflow: "hidden",
             paddingHorizontal: 25,
           }}
@@ -429,8 +412,9 @@ export function HomeScreen() {
           {
             marginTop: 0,
             minHeight: 401,
-            paddingHorizontal: 16,
-            paddingBottom: 37,
+            paddingHorizontal: 20,
+            paddingTop: 20,
+            paddingBottom: 48,
           },
         ]}
       >
@@ -438,14 +422,14 @@ export function HomeScreen() {
           accessibilityRole="button"
           accessibilityLabel="Escolha seu veículo para recarregar"
           onPress={() => app.setSheet("vehicle-picker")}
-          style={[s.row, { height: 62, gap: 10 }]}
+          style={[s.row, { minHeight: 76, gap: 14, marginBottom: 24 }]}
         >
           <Car w={64} />
           <View style={{ flex: 1 }}>
-            <T weight="semibold" style={{ color: "#000", lineHeight: 15 }}>
+            <T weight="semibold" style={{ color: "#000", lineHeight: 19 }}>
               {app.selected?.brand ?? "Marca"}
             </T>
-            <T weight="semibold" style={{ color: "#000", lineHeight: 15 }}>
+            <T weight="semibold" style={{ color: "#000", lineHeight: 19 }}>
               {app.selected?.model ?? "Modelo"}
             </T>
             <T
@@ -453,8 +437,8 @@ export function HomeScreen() {
               style={{
                 color: "#5c5c5c",
                 fontSize: 12,
-                letterSpacing: 1.08,
-                lineHeight: 15,
+                lineHeight: 18,
+                marginTop: 5,
               }}
             >
               Escolha seu veículo para recarregar
@@ -462,19 +446,8 @@ export function HomeScreen() {
           </View>
           <Chevron color="#000" />
         </Pressable>
-        {app.saved.active ? (
-          <ActiveCharge />
-        ) : (
-          <View style={{ marginTop: 16 }}>
-            <HomeSimulation />
-          </View>
-        )}
-        <View
-          style={[
-            s.between,
-            { marginTop: app.saved.active ? 4 : 17, paddingHorizontal: 4 },
-          ]}
-        >
+        {app.saved.active ? <ActiveCharge /> : <HomeSimulation />}
+        <View style={[s.between, { marginTop: 28, paddingHorizontal: 2 }]}>
           <SmallHeading style={{ color: "#000" }}>
             Carregadores próximos
           </SmallHeading>
@@ -491,8 +464,9 @@ export function HomeScreen() {
             <Art name="imgCornerUpRight" w={14} h={11} />
           </Pressable>
         </View>
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginTop: 14 }}>
           <StationRow
+            spacious
             onPress={() => {
               app.setStation(0);
               app.go("map");
@@ -806,7 +780,7 @@ export function ProfileScreen() {
 }
 const m = StyleSheet.create({
   simulation: {
-    height: 184,
+    minHeight: 246,
     borderWidth: 1,
     borderColor: C.border,
     borderRadius: 13,

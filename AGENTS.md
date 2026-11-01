@@ -1,5 +1,7 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+Preserve the user's preference for app screens without simulated phone chrome: do not draw a fake clock, signal/battery indicators, or an iPhone home indicator. Respect real device safe areas instead.
+
 ## User-authorized GitHub workflow
 
 - Repository: https://github.com/RhaonyLuigi/onze-mobi

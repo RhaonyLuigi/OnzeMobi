@@ -1,1 +1,1 @@
-export { AuthScreen as default } from "../screens/Auth";
+export { SplashScreen as default } from "../screens/Splash";

@@ -11,14 +11,7 @@ import {
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  Art,
-  TextLabel as T,
-  GradientButton,
-  Outline,
-  StatusPreview,
-  s,
-} from "../components";
+import { Art, TextLabel as T, GradientButton, Outline, s } from "../components";
 import { colors as C, fonts, gradient } from "../design/theme";
 import { figmaAssets } from "../design/assets";
 import { useApp } from "../state";
@@ -106,8 +99,7 @@ export function AuthScreen() {
   const [confirm, setConfirm] = useState("");
   const [checked, setChecked] = useState(true);
   const signup = app.route === "signup",
-    recovery = app.route === "recovery",
-    splash = app.route === "splash";
+    recovery = app.route === "recovery";
   const enter = () => {
     if (!email.trim() || !password)
       return app.setToast("Preencha o e-mail ou telefone e a senha.");
@@ -134,27 +126,17 @@ export function AuthScreen() {
     >
       <Image
         source={
-          figmaAssets[
-            splash
-              ? "11:249"
-              : signup
-                ? "216:182"
-                : recovery
-                  ? "216:169"
-                  : "216:141"
-          ].imgImage5
+          figmaAssets[signup ? "216:182" : recovery ? "216:169" : "216:141"]
+            .imgImage5
         }
         style={StyleSheet.absoluteFill}
         contentFit="cover"
-        blurRadius={splash ? 0 : 6.4}
+        blurRadius={6.4}
       />
-      {!splash && (
-        <View
-          style={[StyleSheet.absoluteFill, { backgroundColor: "#00000040" }]}
-        />
-      )}
+      <View
+        style={[StyleSheet.absoluteFill, { backgroundColor: "#00000040" }]}
+      />
       <View style={{ height: Platform.OS === "web" ? 0 : insets.top }} />
-      <StatusPreview />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -162,12 +144,12 @@ export function AuthScreen() {
       >
         <View
           style={{
-            minHeight: splash ? 797 : recovery ? 650 : 797,
+            minHeight: recovery ? 650 : 797,
             paddingHorizontal: 16,
           }}
         >
           <Art
-            node={splash ? "11:249" : "216:141"}
+            node="216:141"
             name="imgImage4"
             w={recovery ? 219 : 364}
             h={recovery ? 88 : 146}
@@ -177,332 +159,261 @@ export function AuthScreen() {
               maxWidth: "100%",
             }}
           />
-          {splash ? (
-            <>
-              <T
-                weight="semibold"
+          <View
+            style={{
+              marginTop: recovery ? 27 : signup ? -7 : 48,
+              alignItems: "center",
+            }}
+          >
+            {(signup || recovery) && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                onPress={() => app.go("login")}
                 style={{
-                  color: "white",
-                  fontSize: 18,
-                  textAlign: "center",
-                  marginTop: 14,
-                  lineHeight: 23,
+                  position: "absolute",
+                  left: 32,
+                  top: signup ? 12 : 0,
                 }}
               >
-                Carregando o seu futuro
-              </T>
-              <View style={{ flex: 1 }} />
-              <T
-                weight="medium"
-                style={{
-                  color: "white",
-                  fontSize: 16,
-                  lineHeight: 20,
-                  textAlign: "center",
-                }}
-              >
-                Mais mobilidade{"\n"}Um futuro mais limpo
-              </T>
-              <LinearGradient
-                colors={gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{
-                  width: 222,
-                  height: 6,
-                  borderRadius: 4,
-                  alignSelf: "center",
-                  marginTop: 29,
-                  marginBottom: 21,
-                }}
+                <Art node="16:367" name="imgArrowLeft" w={22} />
+              </Pressable>
+            )}
+            <T
+              weight="semibold"
+              style={{ color: "white", fontSize: 20, lineHeight: 24 }}
+            >
+              {recovery
+                ? "Recuperar senha"
+                : signup
+                  ? "Criar conta"
+                  : "Bem-vindo de volta!"}
+            </T>
+            <T
+              weight="medium"
+              style={{
+                color: "#cdcdcd",
+                fontSize: 14,
+                lineHeight: 22,
+                textAlign: "center",
+                width: 237,
+                marginTop: recovery ? 8 : signup ? 5 : 0,
+              }}
+            >
+              {recovery
+                ? "Digite seu e-mail ou telefone para receber um código de recuperação"
+                : signup
+                  ? "Comece sua jornada com a ONZE mobi"
+                  : "Faça login para continuar"}
+            </T>
+          </View>
+          <View
+            style={{ marginTop: recovery ? 40 : signup ? 20 : 45, gap: 14 }}
+          >
+            {signup && (
+              <AuthField
+                placeholder="Nome completo"
+                icon="person"
+                value={name}
+                onChange={setName}
               />
-            </>
-          ) : (
-            <>
-              <View
-                style={{
-                  marginTop: recovery ? 27 : signup ? -7 : 48,
-                  alignItems: "center",
-                }}
+            )}
+            <AuthField
+              placeholder={signup ? "E-mail" : "E-mail ou telefone"}
+              icon="email"
+              value={email}
+              onChange={setEmail}
+              keyboard="email-address"
+            />
+            {signup && (
+              <AuthField
+                placeholder="Telefone"
+                icon="phone"
+                value={phone}
+                onChange={setPhone}
+                keyboard="phone-pad"
+              />
+            )}
+            {!recovery && (
+              <AuthField
+                placeholder="Senha"
+                icon="lock"
+                value={password}
+                onChange={setPassword}
+                secure
+              />
+            )}
+            {signup && (
+              <AuthField
+                placeholder="Confirmar senha"
+                icon="lock"
+                value={confirm}
+                onChange={setConfirm}
+                secure
+              />
+            )}
+          </View>
+          {!signup && !recovery && (
+            <View style={[s.between, { marginTop: 11, paddingLeft: 14 }]}>
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                accessibilityLabel="Lembrar de mim"
+                onPress={() => setChecked(!checked)}
+                style={[s.row, { gap: 10 }]}
               >
-                {(signup || recovery) && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Voltar"
-                    onPress={() => app.go("login")}
-                    style={{
-                      position: "absolute",
-                      left: 32,
-                      top: signup ? 12 : 0,
-                    }}
-                  >
-                    <Art node="16:367" name="imgArrowLeft" w={22} />
-                  </Pressable>
-                )}
-                <T
-                  weight="semibold"
-                  style={{ color: "white", fontSize: 20, lineHeight: 24 }}
-                >
-                  {recovery
-                    ? "Recuperar senha"
-                    : signup
-                      ? "Criar conta"
-                      : "Bem-vindo de volta!"}
-                </T>
-                <T
-                  weight="medium"
+                <View
                   style={{
-                    color: "#cdcdcd",
-                    fontSize: 14,
-                    lineHeight: 22,
-                    textAlign: "center",
-                    width: 237,
-                    marginTop: recovery ? 8 : signup ? 5 : 0,
+                    width: 19,
+                    height: 19,
+                    borderWidth: 2,
+                    borderColor: "#00ef9a",
+                    borderRadius: 2,
                   }}
                 >
-                  {recovery
-                    ? "Digite seu e-mail ou telefone para receber um código de recuperação"
-                    : signup
-                      ? "Comece sua jornada com a ONZE mobi"
-                      : "Faça login para continuar"}
-                </T>
-              </View>
-              <View
-                style={{ marginTop: recovery ? 40 : signup ? 20 : 45, gap: 14 }}
-              >
-                {signup && (
-                  <AuthField
-                    placeholder="Nome completo"
-                    icon="person"
-                    value={name}
-                    onChange={setName}
-                  />
-                )}
-                <AuthField
-                  placeholder={signup ? "E-mail" : "E-mail ou telefone"}
-                  icon="email"
-                  value={email}
-                  onChange={setEmail}
-                  keyboard="email-address"
-                />
-                {signup && (
-                  <AuthField
-                    placeholder="Telefone"
-                    icon="phone"
-                    value={phone}
-                    onChange={setPhone}
-                    keyboard="phone-pad"
-                  />
-                )}
-                {!recovery && (
-                  <AuthField
-                    placeholder="Senha"
-                    icon="lock"
-                    value={password}
-                    onChange={setPassword}
-                    secure
-                  />
-                )}
-                {signup && (
-                  <AuthField
-                    placeholder="Confirmar senha"
-                    icon="lock"
-                    value={confirm}
-                    onChange={setConfirm}
-                    secure
-                  />
-                )}
-              </View>
-              {!signup && !recovery && (
-                <View style={[s.between, { marginTop: 11, paddingLeft: 14 }]}>
-                  <Pressable
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked }}
-                    accessibilityLabel="Lembrar de mim"
-                    onPress={() => setChecked(!checked)}
-                    style={[s.row, { gap: 10 }]}
-                  >
-                    <View
-                      style={{
-                        width: 19,
-                        height: 19,
-                        borderWidth: 2,
-                        borderColor: "#00ef9a",
-                        borderRadius: 2,
-                      }}
-                    >
-                      {checked && (
-                        <T
-                          weight="bold"
-                          style={{
-                            color: "#00ef9a",
-                            fontSize: 22,
-                            lineHeight: 18,
-                            marginTop: -4,
-                          }}
-                        >
-                          ✓
-                        </T>
-                      )}
-                    </View>
-                    <T style={{ color: "white", fontSize: 15 }}>
-                      Lembrar de mim
-                    </T>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => app.go("recovery")}
-                  >
+                  {checked && (
                     <T
+                      weight="bold"
                       style={{
-                        color: C.blue,
-                        textDecorationLine: "underline",
-                        fontSize: 15,
+                        color: "#00ef9a",
+                        fontSize: 22,
+                        lineHeight: 18,
+                        marginTop: -4,
                       }}
                     >
-                      Esqueceu a senha ?
+                      ✓
                     </T>
-                  </Pressable>
+                  )}
                 </View>
-              )}
-              {signup && (
-                <View
-                  style={[
-                    s.row,
-                    { marginTop: 28, paddingHorizontal: 14, gap: 10 },
-                  ]}
+                <T style={{ color: "white", fontSize: 15 }}>Lembrar de mim</T>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => app.go("recovery")}
+              >
+                <T
+                  style={{
+                    color: C.blue,
+                    textDecorationLine: "underline",
+                    fontSize: 15,
+                  }}
                 >
-                  <Pressable
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked }}
-                    accessibilityLabel="Aceitar termos"
-                    onPress={() => setChecked(!checked)}
-                  >
-                    <T style={{ color: "#00ef9a", fontSize: 25 }}>
-                      {checked ? "☑" : "☐"}
-                    </T>
-                  </Pressable>
+                  Esqueceu a senha ?
+                </T>
+              </Pressable>
+            </View>
+          )}
+          {signup && (
+            <View
+              style={[s.row, { marginTop: 28, paddingHorizontal: 14, gap: 10 }]}
+            >
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                accessibilityLabel="Aceitar termos"
+                onPress={() => setChecked(!checked)}
+              >
+                <T style={{ color: "#00ef9a", fontSize: 25 }}>
+                  {checked ? "☑" : "☐"}
+                </T>
+              </Pressable>
+              <T
+                style={{
+                  color: "white",
+                  fontSize: 14,
+                  lineHeight: 18,
+                  width: 230,
+                }}
+              >
+                Li e aceito os{" "}
+                <T
+                  onPress={() => app.setSheet("terms")}
+                  style={{ color: C.blue, textDecorationLine: "underline" }}
+                >
+                  Termos de uso
+                </T>{" "}
+                e a{" "}
+                <T
+                  onPress={() => app.setSheet("terms")}
+                  style={{ color: C.blue, textDecorationLine: "underline" }}
+                >
+                  Política de privacidade
+                </T>
+              </T>
+            </View>
+          )}
+          <GradientButton
+            round={29}
+            title={
+              recovery ? "Enviar código" : signup ? "Criar conta" : "Entrar"
+            }
+            textStyle={{ color: "#000", fontSize: 18 }}
+            style={{ marginTop: recovery ? 47 : signup ? 25 : 69 }}
+            onPress={
+              recovery
+                ? () =>
+                    email.trim()
+                      ? app.setSheet("recovery-sent")
+                      : app.setToast("Digite seu e-mail ou telefone.")
+                : enter
+            }
+          />
+          {!signup && !recovery && (
+            <>
+              <View
+                style={[s.row, { gap: 12, marginTop: 18, marginHorizontal: 4 }]}
+              >
+                <LinearGradient colors={gradient} style={a.divider} />
+                <T style={{ color: "white", fontSize: 13 }}>ou</T>
+                <LinearGradient colors={gradient} style={a.divider} />
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Continuar com Google"
+                onPress={() => app.setSheet("google")}
+                style={{ marginTop: 19 }}
+              >
+                <Outline
+                  style={{ height: 51 }}
+                  innerStyle={[s.row, { justifyContent: "center", gap: 12 }]}
+                >
+                  <Art node="216:141" name="imgImage20" w={33} />
+                  <T style={{ color: "white", fontSize: 18, lineHeight: 22 }}>
+                    Continuar com Google
+                  </T>
+                </Outline>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Criar conta"
+                onPress={() => app.go("signup")}
+                style={{ alignSelf: "center", marginTop: 14 }}
+              >
+                <T
+                  weight="medium"
+                  style={{ color: "white", fontSize: 16, lineHeight: 22 }}
+                >
+                  Não tem uma conta ?{" "}
                   <T
                     style={{
-                      color: "white",
-                      fontSize: 14,
-                      lineHeight: 18,
-                      width: 230,
+                      color: C.blue,
+                      fontSize: 16,
+                      textDecorationLine: "underline",
                     }}
                   >
-                    Li e aceito os{" "}
-                    <T
-                      onPress={() => app.setSheet("terms")}
-                      style={{ color: C.blue, textDecorationLine: "underline" }}
-                    >
-                      Termos de uso
-                    </T>{" "}
-                    e a{" "}
-                    <T
-                      onPress={() => app.setSheet("terms")}
-                      style={{ color: C.blue, textDecorationLine: "underline" }}
-                    >
-                      Política de privacidade
-                    </T>
+                    Criar conta
                   </T>
-                </View>
-              )}
-              <GradientButton
-                round={29}
-                title={
-                  recovery ? "Enviar código" : signup ? "Criar conta" : "Entrar"
-                }
-                textStyle={{ color: "#000", fontSize: 18 }}
-                style={{ marginTop: recovery ? 47 : signup ? 25 : 69 }}
-                onPress={
-                  recovery
-                    ? () =>
-                        email.trim()
-                          ? app.setSheet("recovery-sent")
-                          : app.setToast("Digite seu e-mail ou telefone.")
-                    : enter
-                }
-              />
-              {!signup && !recovery && (
-                <>
-                  <View
-                    style={[
-                      s.row,
-                      { gap: 12, marginTop: 18, marginHorizontal: 4 },
-                    ]}
-                  >
-                    <LinearGradient colors={gradient} style={a.divider} />
-                    <T style={{ color: "white", fontSize: 13 }}>ou</T>
-                    <LinearGradient colors={gradient} style={a.divider} />
-                  </View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Continuar com Google"
-                    onPress={() => app.setSheet("google")}
-                    style={{ marginTop: 19 }}
-                  >
-                    <Outline
-                      style={{ height: 51 }}
-                      innerStyle={[
-                        s.row,
-                        { justifyContent: "center", gap: 12 },
-                      ]}
-                    >
-                      <Art node="216:141" name="imgImage20" w={33} />
-                      <T
-                        style={{ color: "white", fontSize: 18, lineHeight: 22 }}
-                      >
-                        Continuar com Google
-                      </T>
-                    </Outline>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Criar conta"
-                    onPress={() => app.go("signup")}
-                    style={{ alignSelf: "center", marginTop: 14 }}
-                  >
-                    <T
-                      weight="medium"
-                      style={{ color: "white", fontSize: 16, lineHeight: 22 }}
-                    >
-                      Não tem uma conta ?{" "}
-                      <T
-                        style={{
-                          color: C.blue,
-                          fontSize: 16,
-                          textDecorationLine: "underline",
-                        }}
-                      >
-                        Criar conta
-                      </T>
-                    </T>
-                  </Pressable>
-                </>
-              )}
+                </T>
+              </Pressable>
             </>
           )}
         </View>
       </ScrollView>
       <View
         style={{
-          height: Platform.OS === "web" ? 34 : Math.max(insets.bottom, 12),
-          alignItems: "center",
-          justifyContent: "flex-end",
-          paddingBottom: 8,
+          height: Platform.OS === "web" ? 0 : insets.bottom,
         }}
-      >
-        {Platform.OS === "web" && (
-          <View
-            style={{
-              width: 144,
-              height: 5,
-              borderRadius: 4,
-              backgroundColor: "white",
-            }}
-          />
-        )}
-      </View>
+      />
     </KeyboardAvoidingView>
   );
 }

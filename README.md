@@ -27,8 +27,9 @@ Para visualizar no celular, execute `npm start` e abra o projeto em uma versão 
 
 No login, informe um e-mail ou telefone e uma senha de exemplo. Não existe autenticação remota. Também é possível escolher **Continuar com Google → Explorar prévia**.
 
-- Splash, login, cadastro e recuperação de senha.
-- Início com estado inicial e recarga em andamento.
+- Abertura com a fotografia original do carro, degradê e indicador de carregamento. A transição aguarda a imagem e os dados locais ficarem prontos; a composição também aparece durante o carregamento das fontes.
+- Login, cadastro e recuperação de senha.
+- Início com mais espaço entre as seções, resumo de bateria e simulação reorganizado e recarga em andamento.
 - Mapa com pesquisa, seleção dos três carregadores do design e escolha de conector.
 - QR Code visual e entrada manual de um código de exemplo, como `ONZE001`.
 - Garagem com cadastro, edição, remoção e seleção de veículos.
@@ -59,7 +60,7 @@ A tela de **recarga** mostra bateria inicial/atual/meta, energia adicionada e re
 - `qa/screenshots`: saída local de capturas e geometria dos assets para revisão visual.
 - `qa/feedback`: saída local de capturas da aba Viagem e da recarga ampliada em dois tamanhos de celular. Esses arquivos são gerados pelos scripts e não são versionados.
 
-As telas seguem a referência de 402 × 874 pontos. Em alturas menores, o conteúdo rola e a navegação continua acessível. No navegador, a moldura central mantém a largura de um celular; em Android/iOS, são usados os componentes nativos e as áreas seguras do aparelho.
+As telas seguem a referência de 402 × 874 pontos. Em alturas menores, o conteúdo rola e a navegação continua acessível. No navegador, o conteúdo central mantém a largura de um celular, sem relógio, ícones de sistema ou barra de iPhone simulados. Em Android/iOS, são respeitadas as áreas seguras reais do aparelho.
 
 ## Verificar e gerar
 
@@ -74,6 +75,8 @@ npm run build
 Os testes cobrem validação de login, pesquisa e seleção no mapa, mudança do orçamento pelo controle de carga, conclusão e persistência da sessão, cadastro/remoção de veículo, entrada manual de código e navegação em uma tela de 360 × 740. O Playwright inicia a prévia automaticamente quando necessário.
 
 Os testes adicionais verificam o acesso à Viagem com recarga ativa, conversa com origem/destino, validação de cidades iguais, comparação de custo, persistência do plano, nova conversa e retorno ao início com o botão fixo da recarga.
+
+Os testes da abertura verificam a transição para o login com a fotografia atrasada por uma conexão lenta e a ausência do relógio simulado nos diferentes layouts.
 
 `npm run build` exporta os bundles web, Android e iOS para `dist`. Essa exportação não produz um APK/IPA nem publica o app nas lojas. Nenhum serviço externo de produção foi configurado.
 

@@ -1,7 +1,10 @@
 // Original Figma assets, bundled locally. See design/assets.json for provenance.
 export const figmaAssets: Record<string, Record<string, number>> = {
   "216:692": { settings: require("../../assets/figma/216-692-settings.png") },
-  "11:249": {},
+  "11:249": {
+    imgImage5: require("../../assets/figma/11-249-imgImage5.png"),
+    imgImage4: require("../../assets/figma/11-249-imgImage4.png"),
+  },
   "168:2271": {
     imgImage4: require("../../assets/figma/168-2271-imgImage4.png"),
     imgImage11: require("../../assets/figma/168-2271-imgImage11.png"),

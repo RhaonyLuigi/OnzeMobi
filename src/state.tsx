@@ -210,11 +210,6 @@ function useAppState() {
     if (router.canGoBack()) router.back();
     else router.replace("/home");
   };
-  useEffect(() => {
-    if (route !== "splash" || !ready) return;
-    const t = setTimeout(() => router.replace("/login"), 1700);
-    return () => clearTimeout(t);
-  }, [route, ready, router]);
   const update = (patch: Partial<Saved>) =>
     setSaved((s) => ({ ...s, ...patch }));
   const start = () => {

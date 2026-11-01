@@ -8,6 +8,7 @@ import { Stack } from "expo-router";
 import { Sheets } from "./src/screens/Sheets";
 import { TextLabel } from "./src/components";
 import { colors } from "./src/design/theme";
+import { LaunchVisual } from "./src/screens/Splash";
 function Content() {
   const app = useApp();
   return (
@@ -42,15 +43,17 @@ export default function App() {
     Inter_900Black: require("@expo-google-fonts/inter/900Black/Inter_900Black.ttf"),
   });
   const { height } = useWindowDimensions();
-  if (!loaded && !error)
-    return <View style={{ flex: 1, backgroundColor: colors.navy }} />;
   return (
     <SafeAreaProvider>
       <View style={styles.outer}>
         <View style={[styles.phone, Platform.OS === "web" && { height }]}>
-          <AppProvider>
-            <Content />
-          </AppProvider>
+          {!loaded && !error ? (
+            <LaunchVisual fontsReady={false} />
+          ) : (
+            <AppProvider>
+              <Content />
+            </AppProvider>
+          )}
         </View>
       </View>
     </SafeAreaProvider>
