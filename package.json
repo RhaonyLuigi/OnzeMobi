@@ -40,7 +40,8 @@
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "build": "expo export --platform all",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:pages": "node scripts/build-pages.mjs"
   },
   "private": true
 }
