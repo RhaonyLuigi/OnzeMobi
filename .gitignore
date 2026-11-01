@@ -48,8 +48,8 @@ yarn-error.*
 dist-android/
 test-results/
 playwright-report/
-qa/
+/qa/
 
 # Local Figma references contain temporary download URLs; assets are bundled.
-design/
+/design/
 scripts/download-assets.ps1
