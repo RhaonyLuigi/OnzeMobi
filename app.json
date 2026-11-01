@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "onze-mobi",
+    "name": "ONZE mobi",
     "slug": "onze-mobi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
@@ -20,6 +20,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": ["expo-image", "expo-font", "expo-splash-screen", "expo-router"],
+    "scheme": "onze-mobi"
   }
 }

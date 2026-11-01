@@ -1,5 +1,20 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## User-authorized GitHub workflow
+
+- Repository: https://github.com/RhaonyLuigi/onze-mobi
+- Remote: `origin` (`https://github.com/RhaonyLuigi/onze-mobi.git`)
+- Tracked branch: `main`
+- Visibility: private; preserve it unless the user requests a change.
+
+The user requested on 2026-11-01 that changes requested in this project/chat also be kept up to date in its GitHub repository. Once origin is configured, treat ordinary implementation requests here as authorization to validate, commit the related changes, and push them to the tracked branch, unless the user explicitly asks for local-only work. Reuse the existing origin; do not create a new repository for later changes.
+
+- Run the required checks and any relevant tests before pushing.
+- Inspect and commit only changes belonging to the requested work. Preserve unrelated work.
+- Do not commit credentials, local environment files, caches, generated bundles, local test output, or temporary Figma download URLs.
+- Use normal pushes. Never force-push, overwrite remote history, or change repository visibility without an explicit request.
+- Verify that the remote branch contains the local commit before reporting synchronization as complete. If authentication or a push fails, report that clearly; do not claim the repository is updated.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:

@@ -31,6 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
+!.env.example
 .env*.local
 
 # typescript
@@ -39,3 +42,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Local verification output
+dist-android/
+test-results/
+playwright-report/
+qa/
+
+# Local Figma references contain temporary download URLs; assets are bundled.
+design/
+scripts/download-assets.ps1
