@@ -1,14 +1,14 @@
 # ONZE mobi
 
-Repositório: [RhaonyLuigi/onze-mobi](https://github.com/RhaonyLuigi/onze-mobi).
+Repositório: [RhaonyLuigi/OnzeMobi](https://github.com/RhaonyLuigi/OnzeMobi).
 
-Prévia para a equipe: [abrir ONZE mobi](https://rhaonyluigi.github.io/onze-mobi/).
+Prévia para a equipe: [abrir ONZE mobi](https://rhaonyluigi.github.io/OnzeMobi/).
 
 ## Prévia no GitHub Pages
 
 A publicação é feita automaticamente pelo workflow **Publish app to GitHub Pages** a cada atualização da branch `main`. Ele instala as dependências, verifica TypeScript e lint, gera a versão web e publica o resultado. O progresso aparece na aba **Actions** do repositório. A prévia é pública e usa os mesmos dados demonstrativos do app local.
 
-O comando `npm run build:pages` gera `dist-pages` com as páginas estáticas e o prefixo `/onze-mobi`. Essa configuração fica isolada em `app.config.ts` e no script de exportação: `npm run web` e os builds Android/iOS continuam com seus caminhos normais. Os arquivos gerados não precisam ser enviados manualmente ao GitHub.
+O comando `npm run build:pages` gera `dist-pages` com as páginas estáticas e o prefixo `/OnzeMobi`. Essa configuração fica isolada em `app.config.ts` e no script de exportação: `npm run web` e os builds Android/iOS continuam com seus caminhos normais. Os arquivos gerados não precisam ser enviados manualmente ao GitHub.
 
 Front-end mobile em React Native, Expo e TypeScript, implementado a partir do [design no Figma](https://www.figma.com/design/38myHc0zWLNJBN1GMdZskU/Sem-t%C3%ADtulo?node-id=0-1).
 

@@ -14,7 +14,7 @@ const result = spawnSync(
     stdio: "inherit",
     env: {
       ...process.env,
-      ONZE_PAGES_BASE_PATH: "/onze-mobi",
+      ONZE_PAGES_BASE_PATH: "/OnzeMobi",
       EXPO_NO_TELEMETRY: "1",
     },
   },
@@ -26,4 +26,4 @@ await writeFile(new URL("../dist-pages/.nojekyll", import.meta.url), "");
 for (const path of ["index.html", "home.html", "trip.html", "charging.html"]) {
   await access(new URL(`../dist-pages/${path}`, import.meta.url));
 }
-console.log("GitHub Pages export ready: dist-pages (base path /onze-mobi)");
+console.log("GitHub Pages export ready: dist-pages (base path /OnzeMobi)");

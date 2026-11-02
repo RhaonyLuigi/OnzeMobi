@@ -4,11 +4,11 @@ Preserve the user's preference for app screens without simulated phone chrome: d
 
 ## User-authorized GitHub workflow
 
-- Repository: https://github.com/RhaonyLuigi/onze-mobi
-- Remote: `origin` (`https://github.com/RhaonyLuigi/onze-mobi.git`)
+- Repository: https://github.com/RhaonyLuigi/OnzeMobi
+- Remote: `origin` (`https://github.com/RhaonyLuigi/OnzeMobi.git`)
 - Tracked branch: `main`
 - Visibility: public (changed by the user on 2026-11-01); preserve it unless the user requests a change.
-- GitHub Pages: the `Publish app to GitHub Pages` workflow publishes `main`. Keep the Pages base path `/onze-mobi` isolated to `npm run build:pages`, so local and native builds retain their normal routes. Verify the deployment when reporting a preview update as live.
+- GitHub Pages: the `Publish app to GitHub Pages` workflow publishes `main`. Keep the Pages base path `/OnzeMobi` isolated to `npm run build:pages`, so local and native builds retain their normal routes. Verify the deployment when reporting a preview update as live.
 
 The user requested on 2026-11-01 that changes requested in this project/chat also be kept up to date in its GitHub repository. Once origin is configured, treat ordinary implementation requests here as authorization to validate, commit the related changes, and push them to the tracked branch, unless the user explicitly asks for local-only work. Reuse the existing origin; do not create a new repository for later changes.
 
