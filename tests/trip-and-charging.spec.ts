@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { seedDriver } from "./fixtures";
 
 test("Viagem opens the assistant even while a charging session is active", async ({
   page,
 }) => {
+  await seedDriver(page);
   await page.goto("/configure");
   await page.getByRole("button", { name: "Calcular valor" }).click();
   await page.getByRole("button", { name: "Confirmar e iniciar" }).click();
@@ -103,6 +105,7 @@ test("assistant accepts an entire journey and fewer stops without claiming real 
 test("charging information survives reload and its home button remains fixed on a small screen", async ({
   page,
 }) => {
+  await seedDriver(page);
   await page.setViewportSize({ width: 360, height: 740 });
   await page.goto("/configure");
   await page

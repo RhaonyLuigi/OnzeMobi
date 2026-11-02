@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   Art,
   Car,
+  GradientButton,
   Chevron,
   Header,
   Page,
@@ -14,7 +15,7 @@ import {
   s,
 } from "../components";
 import { colors as C } from "../design/theme";
-import { useApp, Vehicle, decimal, money, Sheet } from "../state";
+import { useApp, Vehicle, decimal, money, Sheet, stations } from "../state";
 import { ChargeRing } from "../ChargeRing";
 
 export function StationRow({
@@ -28,13 +29,11 @@ export function StationRow({
   compact?: boolean;
   spacious?: boolean;
 }) {
-  const names = ["Taguatinga Shopping", "Estacionamento Assaí", "Trade Center"];
-  const available = [4, 2, 1],
-    prices = ["2.20", "2.00", "1.89"];
+  const station = stations[index];
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={names[index]}
+      accessibilityLabel={station.name}
       onPress={onPress}
       style={[m.station, { height: spacious ? 72 : 57 }]}
     >
@@ -70,7 +69,7 @@ export function StationRow({
             letterSpacing: spacious ? 0.2 : 1.08,
           }}
         >
-          {names[index]}
+          {station.name}
         </T>
         <View style={s.row}>
           {!compact && <Art name="imgZap" w={16} />}
@@ -83,7 +82,7 @@ export function StationRow({
               paddingLeft: compact ? 17 : 4,
             }}
           >
-            {available[index]} vagas disponíveis
+            {station.available} vagas disponíveis
           </T>
         </View>
       </View>
@@ -103,7 +102,7 @@ export function StationRow({
           weight="semibold"
           style={{ fontSize: 12, lineHeight: 15, color: C.ink }}
         >
-          R$ {prices[index]}/kWh
+          {money(station.price)}/kWh
         </T>
         {!compact && <Chevron />}
       </View>
@@ -114,24 +113,22 @@ function HomeSimulation() {
   const app = useApp();
   const selected = app.selected;
   return (
-    <View style={[m.simulation, { padding: 14 }]}>
+    <View testID="home-simulation" style={[m.simulation, { padding: 14 }]}>
       <View style={[s.row, { gap: 22 }]}>
-        <View style={{ width: 99, height: 99, alignItems: "center" }}>
-          <Art name="imgEllipse2" w={99} style={StyleSheet.absoluteFill} />
-          <Art
-            name="imgEllipse1"
-            w={4}
-            h={5.983}
-            style={{ position: "absolute", left: 47.5, top: 0 }}
-          />
-          <Art name="imgImage9" w={26} h={33} style={{ marginTop: 17 }} />
+        <ChargeRing
+          value={selected?.battery ?? 0}
+          size={99}
+          thickness={5}
+          track="#eef3f8"
+        >
+          <Art name="imgImage9" w={26} h={33} />
           <T weight="semibold" style={{ color: "#000", fontSize: 15 }}>
             {selected ? selected.battery : "--"}%
           </T>
           <T style={{ color: "#3c3c3c", fontSize: 10, lineHeight: 12 }}>
             Bateria atual
           </T>
-        </View>
+        </ChargeRing>
         <View style={{ flex: 1, gap: 4 }}>
           <T style={{ color: C.gray, fontSize: 12 }}>Carga desejada</T>
           <T
@@ -153,6 +150,14 @@ function HomeSimulation() {
           />
         </View>
       </View>
+      {selected && (
+        <T
+          style={{ fontSize: 10, lineHeight: 15, color: C.gray, marginTop: 12 }}
+        >
+          {selected.brand} {selected.model} · {decimal(selected.capacity)} kWh ·
+          até {decimal(app.quote.powerKw)} kW
+        </T>
+      )}
       <View
         style={{ height: 1, backgroundColor: "#e4eef7", marginVertical: 14 }}
       />
@@ -420,17 +425,24 @@ export function HomeScreen() {
       >
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Escolha seu veículo para recarregar"
-          onPress={() => app.setSheet("vehicle-picker")}
+          accessibilityLabel={
+            app.selected
+              ? "Escolha seu veículo para recarregar"
+              : "Cadastre seu veículo"
+          }
+          onPress={() =>
+            app.saved.vehicles.length
+              ? app.setSheet("vehicle-picker")
+              : app.openVehicleForm()
+          }
           style={[s.row, { minHeight: 76, gap: 14, marginBottom: 24 }]}
         >
           <Car w={64} />
           <View style={{ flex: 1 }}>
-            <T weight="semibold" style={{ color: "#000", lineHeight: 19 }}>
-              {app.selected?.brand ?? "Marca"}
-            </T>
-            <T weight="semibold" style={{ color: "#000", lineHeight: 19 }}>
-              {app.selected?.model ?? "Modelo"}
+            <T weight="semibold" style={{ color: "#000", lineHeight: 22 }}>
+              {app.selected
+                ? `${app.selected.brand} ${app.selected.model}`
+                : "Cadastre seu veículo"}
             </T>
             <T
               numberOfLines={1}
@@ -441,11 +453,25 @@ export function HomeScreen() {
                 marginTop: 5,
               }}
             >
-              Escolha seu veículo para recarregar
+              {app.selected
+                ? `Bateria informada: ${app.selected.battery}% · Trocar veículo`
+                : "Personalize sua experiência de recarga"}
             </T>
           </View>
           <Chevron color="#000" />
         </Pressable>
+        {app.selected && !app.saved.active && (
+          <GradientButton
+            title="Recarregar meu veículo"
+            onPress={() => {
+              app.setStation(null);
+              app.go("map");
+            }}
+            style={{ marginBottom: 22 }}
+            round={13}
+            textStyle={{ color: C.navy }}
+          />
+        )}
         {app.saved.active ? <ActiveCharge /> : <HomeSimulation />}
         <View style={[s.between, { marginTop: 28, paddingHorizontal: 2 }]}>
           <SmallHeading style={{ color: "#000" }}>
@@ -519,8 +545,11 @@ export function VehicleRow({
             {vehicle.model}
           </T>
           <T style={{ color: "#777", fontSize: 14, lineHeight: 20 }}>
-            Bateria:{" "}
-            {vehicle.id === "preview" || disabled ? "--" : vehicle.capacity} kWh
+            Capacidade:{" "}
+            {vehicle.id === "preview" || disabled
+              ? "--"
+              : decimal(vehicle.capacity)}{" "}
+            kWh
           </T>
           <T style={{ color: "#777", fontSize: 14, lineHeight: 20 }}>
             Autonomia:{" "}
@@ -528,16 +557,22 @@ export function VehicleRow({
           </T>
         </View>
       </Pressable>
-      {checked ? (
-        <T style={{ color: "#00e97e", fontSize: 25 }}>☑</T>
-      ) : disabled ? (
+      {checked && (
+        <T
+          accessibilityLabel="Veículo selecionado"
+          style={{ color: "#00b88c", fontSize: 19 }}
+        >
+          ✓
+        </T>
+      )}
+      {disabled ? (
         <T style={{ color: "#ee3333", fontSize: 25 }}>▱</T>
       ) : (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Editar ${vehicle.brand} ${vehicle.model}`}
           onPress={onEdit}
-          style={{ padding: 13 }}
+          style={{ padding: 9 }}
         >
           <Art node="226:1394" name="imgPencilSquare" w={24} />
         </Pressable>
@@ -550,11 +585,12 @@ export function GarageScreen() {
   return (
     <Page nav="home">
       <Header title="Minha garagem" />
-      <View style={[s.whitePanel, s.pad, { paddingTop: 54 }]}>
-        <VehicleRow
-          vehicle={{ ...app.vehicle, brand: "Exemplo", model: "Exemplo" }}
-          disabled
-        />
+      <View style={[s.whitePanel, s.pad, { paddingTop: 24 }]}>
+        {!app.saved.vehicles.length && (
+          <T style={{ color: C.gray, marginVertical: 20 }}>
+            Cadastre seu primeiro veículo para personalizar sua recarga.
+          </T>
+        )}
         <View style={{ gap: 16, marginTop: 16 }}>
           {app.saved.vehicles.map((v) => (
             <VehicleRow
@@ -564,20 +600,14 @@ export function GarageScreen() {
                 app.choose(v);
                 app.go("home");
               }}
-              onEdit={() => {
-                app.setEditing(v);
-                app.setSheet("vehicle-form");
-              }}
+              onEdit={() => app.openVehicleForm(v)}
             />
           ))}
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Adicionar veículo"
-          onPress={() => {
-            app.setEditing(null);
-            app.setSheet("vehicle-form");
-          }}
+          onPress={() => app.openVehicleForm()}
           style={[
             s.row,
             {
@@ -615,6 +645,7 @@ export function ProfileScreen() {
       title: "Minha Garagem",
       subtitle: "Veículos cadastrados",
       icon: "imgVector1",
+      sheet: "garage",
     },
     {
       title: "Minha Conta",

@@ -30,15 +30,20 @@ No login, informe um e-mail ou telefone e uma senha de exemplo. Não existe aute
 - Abertura com a fotografia original do carro, degradê e indicador de carregamento. A transição aguarda a imagem e os dados locais ficarem prontos; a composição também aparece durante o carregamento das fontes.
 - Login, cadastro e recuperação de senha.
 - Início com mais espaço entre as seções, resumo de bateria e simulação reorganizado e recarga em andamento.
-- Mapa com pesquisa, seleção dos três carregadores do design e escolha de conector.
+- Mapa vetorial ilustrativo com arraste, zoom, aproximação animada do eletroposto e painel deslizante com tarifa, conectores, potência, vagas e comodidades de exemplo.
 - QR Code visual e entrada manual de um código de exemplo, como `ONZE001`.
-- Garagem com cadastro, edição, remoção e seleção de veículos.
-- Simulação com controles de bateria, meta e potência.
+- Minha Garagem em popup no perfil, com cadastro, edição, remoção e seleção de veículos.
+- Cadastro direto pelo início e botão de recarga após selecionar um veículo. A configuração exige um veículo e um eletroposto.
+- Simulação por veículo, com bateria informada pelo usuário, capacidade, autonomia e limites de potência ajustáveis. Os valores de referência do catálogo são demonstrativos e variam conforme a versão real do carro.
 - Aba Viagem com conversa demonstrativa, origem/destino, veículo, comparação de prioridades e lista de paradas ilustrativas. A conversa é preservada ao navegar e ao reabrir o app.
 - Configuração, orçamento, confirmação, acompanhamento e conclusão de recarga.
 - Perfil e janelas para conta, pagamento de exemplo, preferências e histórico.
 
 Para finalizar uma sessão, abra **Detalhes da recarga → Concluir recarga de exemplo**. O resultado é salvo no histórico local. Veículos, perfil, preferências, cartão de exemplo e sessão também são preservados no dispositivo.
+
+Na conclusão, **Extrato** abre os dados da sessão e **Baixar extrato em PDF** gera um arquivo local. O histórico também abre o extrato de cada recarga. No navegador há download direto; em Android/iOS, o arquivo é salvo ou compartilhado pela janela do sistema. O documento usa uma cópia dos dados da sessão e é marcado como demonstração, sem cobrança real.
+
+O ícone de sino ao lado da bateria configura um alerta até a meta da sessão. **Testar som** habilita e testa o áudio. O alerta dispara uma vez quando a bateria simulada atinge a porcentagem escolhida; é possível avançar a demonstração até o alerta pela mesma janela. Mantenha o app aberto e o volume ligado. Depois de recarregar a página, reative o áudio em **Testar som**. Se som/notificações forem bloqueados, há aviso visual. O navegador não monitora um carro real nem garante alertas com a aba fechada ou o aparelho bloqueado. O app nativo usa notificações locais permitidas pelo usuário; o disparo desta prévia também depende de ela continuar em execução.
 
 Na aba **Viagem**, escreva o destino e depois a origem, ou uma mensagem como **De Brasília para Goiânia**. Compare **Menor tempo**, **Menor custo** e **Menos paradas**, e expanda a lista de recargas. O cenário local usa uma distância hipotética de **420 km**, independente das cidades informadas. Não há modelo de IA, geocodificação, cálculo de estradas ou consulta de eletropostos reais conectados. Os nomes dos postos são explicitamente exemplos. O módulo `src/features/trip.ts` concentra os dados e cálculos demonstrativos para posterior substituição por uma integração real.
 
@@ -77,6 +82,8 @@ Os testes cobrem validação de login, pesquisa e seleção no mapa, mudança do
 Os testes adicionais verificam o acesso à Viagem com recarga ativa, conversa com origem/destino, validação de cidades iguais, comparação de custo, persistência do plano, nova conversa e retorno ao início com o botão fixo da recarga.
 
 Os testes da abertura verificam a transição para o login com a fotografia atrasada por uma conexão lenta e a ausência do relógio simulado nos diferentes layouts.
+
+Os testes do fluxo de recarga verificam cadastro pelo início, simulação ao trocar o modelo, garagem sem mudança de página, aproximação do mapa e limites do conector, alarme com som e disparo único após reabrir a página, além do download de um PDF válido e do acesso ao extrato pelo histórico.
 
 `npm run build` exporta os bundles web, Android e iOS para `dist`. Essa exportação não produz um APK/IPA nem publica o app nas lojas. Nenhum serviço externo de produção foi configurado.
 

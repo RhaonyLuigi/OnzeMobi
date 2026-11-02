@@ -43,13 +43,11 @@ test("opening waits for its photograph before continuing to login", async ({
   }
 });
 
-test("phone mockup chrome is absent across the screen layouts", async ({
-  page,
-}) => {
-  for (const route of ["login", "home", "map", "charging", "profile"]) {
+for (const route of ["login", "home", "map", "charging", "profile"]) {
+  test(`phone mockup chrome is absent on ${route}`, async ({ page }) => {
     await page.goto(`/${route}`);
     await expect(page.getByRole("img").first()).toBeVisible();
     await expect(page.getByText("9:41", { exact: true })).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText("9:41");
-  }
-});
+  });
+}

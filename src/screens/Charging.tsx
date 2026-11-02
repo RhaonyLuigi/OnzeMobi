@@ -5,7 +5,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   Art,
   Car,
-  Chevron,
   GradientButton,
   Header,
   Outline,
@@ -13,11 +12,10 @@ import {
   SmallHeading,
   TextLabel as T,
   Range,
-  Clock,
   s,
 } from "../components";
 import { colors as C, fonts } from "../design/theme";
-import { useApp, money, decimal, stations } from "../state";
+import { useApp, money, decimal } from "../state";
 
 const label = { color: "#ddf2ff", fontSize: 12, lineHeight: 15 };
 function SimField({
@@ -70,10 +68,7 @@ function SimField({
 }
 export function SimulationScreen() {
   const app = useApp();
-  const energy =
-    Math.round(Math.max(0, app.target - app.current) * app.vehicle.capacity) /
-    100;
-  const minutes = Math.ceil((energy / app.power) * 60);
+  const { energy, minutes } = app;
   return (
     <Page dark>
       <Header logo />
@@ -121,10 +116,11 @@ export function SimulationScreen() {
             title="Carregador"
             icon="imgInicio"
             onPress={() => {
-              app.setPower(
-                app.power === 60 ? 150 : app.power === 150 ? 22 : 60,
-              );
-              app.setSimReady(true);
+              const power =
+                app.power === 60 ? 150 : app.power === 150 ? 22 : 60;
+              app.setPower(power);
+              app.setConnector(power === 22 ? "Tipo 2" : "CCS 2");
+              app.setStation(null);
             }}
           >
             <Art node="226:1091" name="imgImage29" w={25} h={26} />
@@ -175,7 +171,6 @@ export function SimulationScreen() {
             onChange={(v) => {
               app.setCurrent(v);
               app.setTarget(Math.max(v, app.target));
-              app.setSimReady(true);
             }}
             thumb={C.cyan}
             dark
@@ -191,7 +186,6 @@ export function SimulationScreen() {
             value={app.simReady ? app.target : 0}
             onChange={(v) => {
               app.setTarget(Math.max(v, app.current));
-              app.setSimReady(true);
             }}
             thumb={C.blue}
             dark
@@ -242,7 +236,7 @@ export function SimulationScreen() {
                 weight="semibold"
                 style={{ color: "white", fontSize: 20, lineHeight: 24 }}
               >
-                {app.simReady ? money(energy * 2.5) : "R$--"}
+                {app.simReady ? money(app.cost) : "R$--"}
               </T>
               <T style={{ color: "#ddf2ff", fontSize: 10, lineHeight: 12 }}>
                 Valor estimado da recarga
@@ -325,209 +319,7 @@ export function SimulationScreen() {
     </Page>
   );
 }
-export function ConfigureScreen() {
-  const app = useApp();
-  return (
-    <Page>
-      <Header title="Configurar Recarga" />
-      <View
-        style={[s.whitePanel, s.pad, { paddingTop: 15, paddingBottom: 35 }]}
-      >
-        <View style={[s.row, { gap: 5, height: 45 }]}>
-          <Art node="84:434" name="imgImage12" w={41} h={45} />
-          <View>
-            <SmallHeading style={{ color: "#000" }}>
-              {stations[app.station ?? 0].name}
-            </SmallHeading>
-            <T weight="semibold" style={{ color: "#676767", marginTop: 4 }}>
-              {app.connector} · 150kWh
-            </T>
-          </View>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Selecionar veículo para recarga"
-          onPress={() => app.setSheet("vehicle-picker")}
-          style={[
-            s.row,
-            {
-              height: 87,
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: "#ccc",
-              paddingHorizontal: 6,
-              boxShadow: "0px 1px 4px rgba(0,0,0,0.25)",
-              marginTop: 17,
-              gap: 9,
-            },
-          ]}
-        >
-          <Car />
-          <View style={{ flex: 1 }}>
-            <SmallHeading style={{ color: "#000" }}>
-              {app.vehicle.brand}
-            </SmallHeading>
-            <SmallHeading style={{ color: "#000" }}>
-              {app.vehicle.model}
-            </SmallHeading>
-            <T style={{ color: "#676767", fontSize: 14, lineHeight: 20 }}>
-              Bateria atual: {app.vehicle.battery}%
-            </T>
-            <T style={{ color: "#676767", fontSize: 14, lineHeight: 20 }}>
-              Autonomia: {app.vehicle.range} km
-            </T>
-          </View>
-          <Chevron color="#777" />
-        </Pressable>
-        <Art
-          node="84:434"
-          name="imgLine2"
-          w={253}
-          h={1}
-          style={{ alignSelf: "center", marginTop: 18 }}
-        />
-        <SmallHeading style={{ color: "#000", marginTop: 11 }}>
-          Nivel de bateria desejado
-        </SmallHeading>
-        <View
-          style={{
-            marginTop: 8,
-            height: 113,
-            paddingHorizontal: 19,
-            justifyContent: "flex-start",
-          }}
-        >
-          <View
-            style={{
-              alignSelf: "flex-end",
-              marginRight: "15%",
-              borderWidth: 1,
-              borderColor: "#d9d9d9",
-              borderRadius: 8,
-              paddingHorizontal: 4,
-              boxShadow: "0px 1px 4px #0c0c0d1a",
-            }}
-          >
-            <T style={{ fontSize: 13, color: "#000" }}>{app.target}%</T>
-          </View>
-          <View style={{ marginTop: 11 }}>
-            <Range
-              label="Nível de bateria desejado"
-              value={app.target}
-              onChange={(v) => app.setTarget(Math.max(v, app.vehicle.battery))}
-              gradientTrack
-              size={24}
-              height={18}
-            />
-          </View>
-          <View style={s.between}>
-            <SmallHeading style={{ color: "#000", fontSize: 13 }}>
-              {app.vehicle.battery}%
-            </SmallHeading>
-            <SmallHeading style={{ color: "#000", fontSize: 13 }}>
-              100%
-            </SmallHeading>
-          </View>
-        </View>
-        <View style={[s.row, { gap: 16 }]}>
-          <View style={[c.metric, s.row]}>
-            <Art
-              node="84:434"
-              name="imgLightningBolt"
-              w={29}
-              h={46}
-              fit="contain"
-            />
-            <View>
-              <T style={{ color: "#000", fontSize: 15 }}>Energia necessária</T>
-              <SmallHeading
-                style={{
-                  color: "#000",
-                  fontSize: 13,
-                  marginTop: 8,
-                  textAlign: "center",
-                }}
-              >
-                + {decimal(app.energy)} kWh
-              </SmallHeading>
-            </View>
-          </View>
-          <View style={[c.metric, s.row, { gap: 8, paddingLeft: 10 }]}>
-            <Clock />
-            <View>
-              <T style={{ color: "#000", fontSize: 15 }}>Tempo estimado</T>
-              <SmallHeading
-                style={{
-                  color: "#000",
-                  fontSize: 13,
-                  marginTop: 8,
-                  textAlign: "center",
-                }}
-              >
-                ~ {app.minutes} min
-              </SmallHeading>
-            </View>
-          </View>
-        </View>
-        <Art
-          node="84:434"
-          name="imgLine2"
-          w={253}
-          h={1}
-          style={{ alignSelf: "center", marginTop: 16 }}
-        />
-        <SmallHeading style={{ color: "#000", marginTop: 11 }}>
-          Selecione o horário
-        </SmallHeading>
-        <View
-          style={[
-            s.row,
-            {
-              height: 57,
-              marginTop: 44,
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 17,
-              paddingHorizontal: 10,
-              gap: 20,
-            },
-          ]}
-        >
-          <Clock />
-          <TextInput
-            accessibilityLabel="Horário da recarga"
-            value={app.time}
-            onChangeText={app.setTime}
-            maxLength={5}
-            style={{
-              fontFamily: fonts.regular,
-              fontSize: 15,
-              textDecorationLine: "underline",
-              outlineWidth: 0,
-              width: 58,
-            }}
-          />
-          <View style={{ flex: 1 }} />
-          <T style={{ color: "#656565", fontSize: 15 }}>Preço: R$ 2,50/kWh</T>
-          <Chevron color="#000" />
-        </View>
-        <GradientButton
-          title="Calcular valor"
-          onPress={() => {
-            if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(app.time))
-              return app.setToast("Informe um horário válido, como 12:45.");
-            if (app.target <= app.vehicle.battery)
-              return app.setToast(
-                "Selecione uma carga acima da bateria atual.",
-              );
-            app.go("summary");
-          }}
-          style={{ width: 242, alignSelf: "center", marginTop: 60 }}
-        />
-      </View>
-    </Page>
-  );
-}
+export { ConfigureScreen } from "./Configure";
 export function SummaryScreen() {
   const app = useApp();
   return (
@@ -540,9 +332,11 @@ export function SummaryScreen() {
           { borderTopColor: "#00e585", paddingBottom: 35 },
         ]}
       >
-        <View style={[s.row, { height: 191, paddingHorizontal: 46, gap: 40 }]}>
+        <View
+          style={[s.row, { minHeight: 175, paddingHorizontal: 8, gap: 22 }]}
+        >
           <Car w={114} gray />
-          <View style={{ flex: 1, minWidth: 138 }}>
+          <View style={{ flex: 1 }}>
             <T weight="medium" style={c.white}>
               {app.vehicle.brand}
             </T>
@@ -582,7 +376,7 @@ export function SummaryScreen() {
               <View style={[c.tableCell, { paddingTop: 15 }]}>
                 <T style={c.tableLabel}>Preço por kwh</T>
                 <T weight="bold" style={{ color: "white", fontSize: 18 }}>
-                  R$ 2,50
+                  {money(app.tariff)}
                 </T>
               </View>
             </View>
@@ -763,8 +557,8 @@ export function SuccessScreen() {
         </T>
         <GradientButton
           round={36}
-          title="Acompanhar"
-          onPress={() => app.setSheet("history")}
+          title="Extrato"
+          onPress={() => app.openReceipt()}
           style={{ marginTop: 15 }}
           textStyle={{ color: "#000", fontSize: 20 }}
         />

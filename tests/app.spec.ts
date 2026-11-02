@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { seedDriver } from "./fixtures";
 
 test("login validates empty fields, toggles password visibility, and opens the app", async ({
   page,
@@ -25,6 +26,7 @@ test("login validates empty fields, toggles password visibility, and opens the a
 test("map search and station selection lead to the charge configuration", async ({
   page,
 }) => {
+  await seedDriver(page);
   await page.goto("/map");
   await page
     .getByRole("textbox", { name: "Pesquisar carregadores" })
@@ -49,13 +51,14 @@ test("map search and station selection lead to the charge configuration", async 
 test("charge slider updates its quote and a completed session persists in history", async ({
   page,
 }) => {
+  await seedDriver(page);
   await page.goto("/configure");
   await page
     .getByRole("slider", { name: "Nível de bateria desejado" })
     .fill("90");
-  await expect(page.getByText("+ 43,6 kWh", { exact: true })).toBeVisible();
+  await expect(page.getByText("+ 22,5 kWh", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Calcular valor" }).click();
-  await expect(page.getByText("R$ 109,00", { exact: true })).toBeVisible();
+  await expect(page.getByText("R$ 49,50", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Confirmar e iniciar" }).click();
   await expect(page).toHaveURL(/charging/);
   await page.getByRole("button", { name: "Detalhes da recarga" }).click();
@@ -65,7 +68,7 @@ test("charge slider updates its quote and a completed session persists in histor
   await expect(page.getByText("Recarga concluída!")).toBeVisible();
   await page.getByRole("button", { name: "Ver histórico" }).click();
   await expect(
-    page.getByText("43,6 kWh", { exact: false }).last(),
+    page.getByText("22,5 kWh", { exact: false }).last(),
   ).toBeVisible();
   await page.reload();
   await page.getByRole("button", { name: "Ver histórico" }).click();
@@ -136,9 +139,11 @@ test("mobile navigation remains reachable on a smaller screen", async ({
   await page
     .getByRole("button", { name: "Minha Garagem", exact: true })
     .click();
+  await expect(page).toHaveURL(/\/profile$/);
   await expect(
     page.getByRole("button", { name: "Adicionar veículo", exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Fechar", exact: true }).click();
   await page.getByRole("tab", { name: "QR Code", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Digitar código do carregador" }),

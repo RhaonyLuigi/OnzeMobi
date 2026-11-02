@@ -6,6 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: config.name ?? "ONZE mobi",
     slug: config.slug ?? "onze-mobi",
+    plugins: [...(config.plugins ?? []), "expo-notifications", "expo-sharing"],
     web: {
       ...config.web,
       ...(pagesBasePath ? { output: "static" as const } : {}),

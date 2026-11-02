@@ -13,6 +13,7 @@ import {
 import { ChargeRing } from "../ChargeRing";
 import { colors as C } from "../design/theme";
 import { useApp, decimal, money } from "../state";
+import { BellIcon } from "../Icons";
 
 export function ChargingScreen() {
   const app = useApp();
@@ -81,7 +82,7 @@ export function ChargingScreen() {
               Sessão de demonstração
             </T>
           </View>
-          <View style={{ marginTop: 19 }}>
+          <View style={{ marginTop: 19, width: "100%", alignItems: "center" }}>
             <ChargeRing value={charge.battery}>
               <T
                 weight="semibold"
@@ -101,6 +102,40 @@ export function ChargingScreen() {
                 style={{ marginTop: 6 }}
               />
             </ChargeRing>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Configurar alerta de bateria"
+              onPress={() => app.setSheet("alarm")}
+              style={{
+                position: "absolute",
+                right: 5,
+                top: 60,
+                alignItems: "center",
+                gap: 7,
+                padding: 10,
+              }}
+            >
+              <View
+                style={{
+                  width: 43,
+                  height: 43,
+                  borderRadius: 22,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#15354c",
+                  borderWidth: 1,
+                  borderColor: app.saved.alarm ? C.cyan : "#2a526c",
+                }}
+              >
+                <BellIcon
+                  color={app.saved.alarm ? C.cyan : "white"}
+                  size={21}
+                />
+              </View>
+              <T style={{ color: "#b8d5e7", fontSize: 10 }}>
+                {app.saved.alarm ? `${app.saved.alarm.threshold}%` : "Alerta"}
+              </T>
+            </Pressable>
           </View>
           <T
             style={{

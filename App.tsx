@@ -9,6 +9,7 @@ import { Sheets } from "./src/screens/Sheets";
 import { TextLabel } from "./src/components";
 import { colors } from "./src/design/theme";
 import { LaunchVisual } from "./src/screens/Splash";
+import { BatteryAlarmAlert } from "./src/screens/SessionSheets";
 function Content() {
   const app = useApp();
   return (
@@ -22,6 +23,7 @@ function Content() {
         }}
       />
       <Sheets />
+      <BatteryAlarmAlert />
       {!!app.toast && (
         <View style={styles.toast} accessibilityRole="alert">
           <TextLabel

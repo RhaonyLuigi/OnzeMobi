@@ -10,7 +10,15 @@ import {
   Platform,
   Switch,
 } from "react-native";
-import { Art, Chevron, GradientButton, TextLabel as T, s } from "../components";
+import {
+  Art,
+  Car,
+  Chevron,
+  GradientButton,
+  Range,
+  TextLabel as T,
+  s,
+} from "../components";
 import { colors as C, fonts } from "../design/theme";
 import {
   useApp,
@@ -22,26 +30,8 @@ import {
 } from "../state";
 import { VehicleRow } from "./Main";
 import { ConnectorChoice } from "./Discovery";
-const modelOptions: Record<string, string[]> = {
-  Audi: ["e-tron", "Q4 e-tron", "e-tron GT"],
-  BMW: ["iX1", "i4", "iX"],
-  BYD: ["King", "Dolphin", "Seal"],
-  "Caoa Chery": ["iCar", "Tiggo 7", "Tiggo 8"],
-};
-const capacities: Record<string, number> = {
-  "e-tron": 95,
-  "Q4 e-tron": 82,
-  "e-tron GT": 93.4,
-  iX1: 64.7,
-  i4: 83.9,
-  iX: 111.5,
-  King: 18.3,
-  Dolphin: 44.9,
-  Seal: 82.5,
-  iCar: 30.8,
-  "Tiggo 7": 19.3,
-  "Tiggo 8": 19.3,
-};
+import { vehicleCatalog } from "../features/vehicles";
+import { AlarmSettings, ReceiptSheet } from "./SessionSheets";
 function Field({
   label,
   value,
@@ -150,12 +140,37 @@ function VehicleForm() {
   const [model, setModel] = useState(
     editing?.model === "Modelo" ? "" : (editing?.model ?? ""),
   );
-  const [year, setYear] = useState(editing?.year ?? "2023");
+  const [year, setYear] = useState(editing?.year ?? "2026");
   const [plate, setPlate] = useState(editing?.plate ?? "");
   const [connector, setConnector] = useState(editing?.connector ?? "Tipo 2");
+  const [battery, setBattery] = useState(editing?.battery ?? 50);
+  const [capacity, setCapacity] = useState(String(editing?.capacity ?? 60));
+  const [range, setRange] = useState(String(editing?.range ?? 300));
+  const [ac, setAc] = useState(String(editing?.maxAcKw ?? 7.4));
+  const [dc, setDc] = useState(String(editing?.maxDcKw ?? 60));
+  const [technical, setTechnical] = useState(false);
   const [error, setError] = useState("");
   const save = () => {
     if (!brand || !model) return setError("Selecione a marca e o modelo.");
+    const numeric = (value: string) => Number(value.replace(",", "."));
+    if (
+      ![capacity, range, ac, dc].every(
+        (v) => v.trim() !== "" && Number.isFinite(numeric(v)),
+      ) ||
+      numeric(capacity) <= 0 ||
+      numeric(capacity) > 250 ||
+      numeric(range) <= 0 ||
+      numeric(range) > 1500 ||
+      numeric(ac) <= 0 ||
+      numeric(dc) < 0
+    )
+      return setError(
+        "Confira a capacidade, a autonomia e as potências do veículo.",
+      );
+    if (connector === "CCS 2" && numeric(dc) === 0)
+      return setError(
+        "Este veículo não tem potência DC informada. Selecione Tipo 2 ou ajuste os dados técnicos.",
+      );
     if (
       !/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(
         plate.toUpperCase().replace(/[^A-Z0-9]/g, ""),
@@ -170,16 +185,13 @@ function VehicleForm() {
       year,
       plate: plate.toUpperCase(),
       connector,
-      capacity: capacities[model] ?? 60,
-      range: 280,
+      capacity: numeric(capacity),
+      range: numeric(range),
+      maxAcKw: numeric(ac),
+      maxDcKw: numeric(dc),
+      battery,
     };
-    const vehicles = editing
-      ? app.saved.vehicles.map((old) => (old.id === editing.id ? v : old))
-      : [...app.saved.vehicles, v];
-    app.update({ vehicles, selected: v.id });
-    app.setCurrent(v.battery);
-    app.setSimReady(true);
-    app.setSheet(null);
+    app.saveVehicle(v);
     app.setToast(editing ? "Veículo atualizado." : "Veículo cadastrado.");
   };
   return (
@@ -188,7 +200,7 @@ function VehicleForm() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-          onPress={() => app.setSheet(null)}
+          onPress={() => app.setSheet(app.vehicleFormReturn)}
         >
           <T style={{ color: "#000", fontSize: 28 }}>←</T>
         </Pressable>
@@ -204,7 +216,7 @@ function VehicleForm() {
       <Select
         label="Marca do veículo"
         value={brand || "Marca"}
-        options={Object.keys(modelOptions)}
+        options={Object.keys(vehicleCatalog)}
         onChange={(v) => {
           setBrand(v);
           setModel("");
@@ -214,9 +226,22 @@ function VehicleForm() {
       <Select
         label="Modelo do veículo"
         value={model || "Modelo"}
-        options={modelOptions[brand] ?? ["Selecione a marca"]}
+        options={
+          Object.keys(vehicleCatalog[brand] ?? {}).length
+            ? Object.keys(vehicleCatalog[brand])
+            : ["Selecione a marca"]
+        }
         onChange={(v) => {
-          if (brand) setModel(v);
+          if (brand) {
+            setModel(v);
+            const data = vehicleCatalog[brand][v];
+            if (data) {
+              setCapacity(String(data.capacity));
+              setRange(String(data.range));
+              setAc(String(data.maxAcKw));
+              setDc(String(data.maxDcKw));
+            }
+          }
         }}
       />
       <Select
@@ -238,6 +263,92 @@ function VehicleForm() {
         Tipo de Conector
       </T>
       <ConnectorChoice value={connector} onChange={setConnector} />
+      <View
+        style={{
+          backgroundColor: C.light,
+          padding: 14,
+          borderRadius: 12,
+          marginTop: 20,
+        }}
+      >
+        <View style={s.between}>
+          <T weight="semibold" style={{ fontSize: 13 }}>
+            Bateria atual do veículo
+          </T>
+          <T weight="bold" style={{ color: C.ink }}>
+            {battery}%
+          </T>
+        </View>
+        <Range
+          label="Bateria atual do veículo"
+          value={battery}
+          onChange={setBattery}
+          gradientTrack
+        />
+        <T style={{ fontSize: 11, lineHeight: 16, color: C.gray }}>
+          Informe a porcentagem que aparece no painel do carro.
+        </T>
+      </View>
+      {!!model && (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ajustar dados técnicos"
+            accessibilityState={{ expanded: technical }}
+            onPress={() => setTechnical(!technical)}
+            style={[s.between, { marginTop: 18, paddingVertical: 8 }]}
+          >
+            <View>
+              <T weight="semibold" style={{ fontSize: 13 }}>
+                Dados para a simulação
+              </T>
+              <T style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>
+                {capacity} kWh · {range} km de autonomia
+              </T>
+            </View>
+            <Chevron down={!technical} />
+          </Pressable>
+          {technical && (
+            <>
+              <Field
+                label="Capacidade da bateria (kWh)"
+                value={capacity}
+                onChange={setCapacity}
+                keyboard="numeric"
+              />
+              <Field
+                label="Autonomia com carga completa (km)"
+                value={range}
+                onChange={setRange}
+                keyboard="numeric"
+              />
+              <Field
+                label="Potência máxima AC (kW)"
+                value={ac}
+                onChange={setAc}
+                keyboard="numeric"
+              />
+              <Field
+                label="Potência máxima DC (kW)"
+                value={dc}
+                onChange={setDc}
+                keyboard="numeric"
+              />
+            </>
+          )}
+          <T
+            style={{
+              fontSize: 11,
+              lineHeight: 17,
+              color: C.gray,
+              marginTop: 7,
+            }}
+          >
+            Valores de referência da prévia. Ajuste conforme a versão do seu
+            veículo; use 0 em DC se não houver recarga rápida.
+          </T>
+        </>
+      )}
       {!!error && (
         <T
           accessibilityRole="alert"
@@ -260,11 +371,59 @@ function VehicleForm() {
               selected:
                 app.saved.selected === editing.id ? null : app.saved.selected,
             });
-            app.setSheet(null);
+            app.setSheet(app.vehicleFormReturn);
           }}
           style={{ alignSelf: "center", padding: 12 }}
         >
           <T style={{ color: "#b3261e", fontSize: 13 }}>Remover veículo</T>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+function GarageContent() {
+  const app = useApp();
+  const origin = app.sheet === "garage" ? "garage" : "vehicle-picker";
+  return (
+    <View style={sh.body}>
+      {!app.saved.vehicles.length && (
+        <View style={{ alignItems: "center", paddingVertical: 28 }}>
+          <Car w={120} />
+          <T weight="semibold" style={{ marginTop: 22 }}>
+            Sua garagem começa aqui
+          </T>
+          <T style={[sh.description, { textAlign: "center" }]}>
+            Cadastre um veículo para personalizar a simulação e escolher onde
+            recarregar.
+          </T>
+        </View>
+      )}
+      <View style={{ gap: 16 }}>
+        {app.saved.vehicles.map((v) => (
+          <VehicleRow
+            key={v.id}
+            vehicle={v}
+            checked={app.selected?.id === v.id}
+            onPress={() => app.choose(v, origin !== "garage")}
+            onEdit={() => app.openVehicleForm(v, origin)}
+          />
+        ))}
+      </View>
+      <GradientButton
+        title="Adicionar veículo"
+        onPress={() => app.openVehicleForm(null, origin)}
+        style={{ marginTop: 22 }}
+      />
+      {app.selected && origin === "garage" && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Recarregar veículo"
+          onPress={() => app.go("map")}
+          style={{ padding: 15, alignItems: "center", marginTop: 8 }}
+        >
+          <T weight="semibold" style={{ color: C.ink }}>
+            Recarregar veículo →
+          </T>
         </Pressable>
       )}
     </View>
@@ -276,42 +435,16 @@ function SheetContent() {
   const [second, setSecond] = useState("");
   const [checked, setChecked] = useState(app.saved.notifications);
   switch (app.sheet) {
+    case "alarm":
+      return <AlarmSettings />;
+    case "receipt":
+      return <ReceiptSheet />;
+    case "garage":
     case "vehicle-form":
-      return <VehicleForm />;
+      if (app.sheet === "vehicle-form") return <VehicleForm />;
+      return <GarageContent />;
     case "vehicle-picker":
-      return (
-        <View style={{ gap: 26, paddingVertical: 30, paddingHorizontal: 8 }}>
-          {app.saved.vehicles.map((v) => (
-            <VehicleRow
-              key={v.id}
-              vehicle={v}
-              checked={app.selected?.id === v.id}
-              onPress={() => app.choose(v)}
-              onEdit={() => {
-                app.setEditing(v);
-                app.setSheet("vehicle-form");
-              }}
-            />
-          ))}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              app.setEditing(null);
-              app.setSheet("vehicle-form");
-            }}
-            style={{
-              padding: 12,
-              alignItems: "center",
-              backgroundColor: C.light,
-              borderRadius: 8,
-            }}
-          >
-            <T weight="semibold" style={{ color: C.ink }}>
-              + Adicionar veículo
-            </T>
-          </Pressable>
-        </View>
-      );
+      return <GarageContent />;
     case "manual-code":
       return (
         <View style={sh.body}>
@@ -471,6 +604,16 @@ function SheetContent() {
                 >
                   {money(c.cost)}
                 </T>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver extrato ${c.id}`}
+                  onPress={() => app.openReceipt(c)}
+                  style={{ paddingTop: 13 }}
+                >
+                  <T weight="semibold" style={{ color: C.ink, fontSize: 12 }}>
+                    Ver extrato e baixar PDF →
+                  </T>
+                </Pressable>
               </View>
             ))
           ) : (
@@ -601,6 +744,10 @@ function SheetContent() {
   }
 }
 const titles: Partial<Record<NonNullable<Sheet>, string>> = {
+  garage: "Minha Garagem",
+  "vehicle-picker": "Escolha seu veículo",
+  alarm: "Alerta de bateria",
+  receipt: "Extrato da recarga",
   "manual-code": "Código do carregador",
   account: "Minha Conta",
   payment: "Formas de pagamento",
@@ -641,8 +788,7 @@ export function Sheets() {
         />
         <View
           style={{
-            backgroundColor:
-              app.sheet === "vehicle-picker" ? "#dedede" : "white",
+            backgroundColor: "white",
             width: "100%",
             maxWidth: 384,
             maxHeight: "90%",

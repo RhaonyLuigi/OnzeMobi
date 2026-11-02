@@ -12,7 +12,8 @@ import {
   createDemoPlan,
   type TripConversation,
 } from "./features/trip";
-import { chargeSnapshot } from "./features/charging";
+import { calculateCharge, chargeSnapshot } from "./features/charging";
+import { deliverBatteryAlarm } from "./features/batteryAlarm";
 export const routes = [
   "splash",
   "login",
@@ -41,6 +42,8 @@ export type Vehicle = {
   capacity: number;
   battery: number;
   range: number;
+  maxAcKw?: number;
+  maxDcKw?: number;
 };
 export type Charge = {
   id: string;
@@ -56,8 +59,14 @@ export type Charge = {
   powerKw?: number;
   pricePerKwh?: number;
   chargerId?: string;
+  demoProgress?: number;
+  completedAt?: string;
+  paymentLast4?: string;
 };
 export type Sheet =
+  | "garage"
+  | "alarm"
+  | "receipt"
   | "vehicle-picker"
   | "vehicle-form"
   | "manual-code"
@@ -75,14 +84,16 @@ export type Sheet =
   | null;
 export const sampleVehicle: Vehicle = {
   id: "preview",
-  brand: "Marca",
-  model: "Modelo",
+  brand: "Veículo",
+  model: "de exemplo",
   year: "2023",
   plate: "",
   connector: "Tipo 2",
-  capacity: 155.5556,
+  capacity: 60,
   battery: 62,
   range: 280,
+  maxAcKw: 7.4,
+  maxDcKw: 60,
 };
 export const stations = [
   {
@@ -92,22 +103,46 @@ export const stations = [
     price: 2.2,
     node: "214:499",
     image: "imgImage11",
+    area: "Taguatinga Sul · Brasília, DF",
+    hours: "08h às 22h",
+    amenities: ["Alimentação", "Banheiros", "Estacionamento"],
+    connectors: [
+      { type: "Tipo 2", powerKw: 22, available: 2 },
+      { type: "CCS 2", powerKw: 150, available: 2 },
+    ],
+    x: 125,
+    y: 280,
   },
   {
     id: 1,
     name: "Estacionamento Assaí",
-    available: 1,
-    price: 1.89,
+    available: 2,
+    price: 2.0,
     node: "228:196",
     image: "imgImages1",
+    area: "Águas Claras · Brasília, DF",
+    hours: "07h às 22h",
+    amenities: ["Mercado", "Banheiros", "Estacionamento"],
+    connectors: [
+      { type: "Tipo 2", powerKw: 22, available: 1 },
+      { type: "CCS 2", powerKw: 60, available: 1 },
+    ],
+    x: 295,
+    y: 405,
   },
   {
     id: 2,
     name: "Trade Center",
-    available: 2,
-    price: 2.0,
+    available: 1,
+    price: 1.89,
     node: "228:282",
     image: "imgImages11",
+    area: "Taguatinga Centro · Brasília, DF",
+    hours: "24 horas",
+    amenities: ["Café", "Banheiros", "Estacionamento"],
+    connectors: [{ type: "Tipo 2", powerKw: 22, available: 1 }],
+    x: 265,
+    y: 190,
   },
 ];
 type Saved = {
@@ -120,9 +155,17 @@ type Saved = {
   session: Charge | null;
   notifications: boolean;
   trip: TripConversation;
+  draft: {
+    station: number | null;
+    target: number;
+    connector: string;
+    power: number;
+    time: string;
+  };
+  alarm: { sessionId: string; threshold: number; triggered: boolean } | null;
 };
 const initial: Saved = {
-  vehicles: [sampleVehicle],
+  vehicles: [],
   selected: null,
   profile: { name: "Nome", email: "Seunome@gmail.com" },
   history: [],
@@ -131,6 +174,14 @@ const initial: Saved = {
   session: null,
   notifications: true,
   trip: newTrip(),
+  draft: {
+    station: null,
+    target: 80,
+    connector: "CCS 2",
+    power: 60,
+    time: "12:45",
+  },
+  alarm: null,
 };
 function useAppState() {
   const router = useRouter();
@@ -146,38 +197,77 @@ function useAppState() {
   const [ready, setReady] = useState(false);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [editing, setEditing] = useState<Vehicle | null>(null);
-  const [station, setStation] = useState<number | null>(null);
-  const [target, setTarget] = useState(80);
-  const [current, setCurrent] = useState(0);
-  const [simReady, setSimReady] = useState(false);
-  const [power, setPower] = useState(60);
-  const [time, setTime] = useState("12:45");
+  const [vehicleFormReturn, setVehicleFormReturn] = useState<
+    "garage" | "vehicle-picker" | null
+  >(null);
+  const [receipt, setReceipt] = useState<Charge | null>(null);
+  const [alarmRinging, setAlarmRinging] = useState(false);
+  const [clock, setClock] = useState(() => Date.now());
+  const { station, target, power, time, connector } = saved.draft;
+  const setDraft = (patch: Partial<Saved["draft"]>) =>
+    setSaved((s) => ({ ...s, draft: { ...s.draft, ...patch } }));
+  const setStation = (station: number | null) => setDraft({ station });
+  const setTarget = (target: number) =>
+    setDraft({ target: Math.max(0, Math.min(100, target)) });
+  const setPower = (power: number) => setDraft({ power });
+  const setTime = (time: string) => setDraft({ time });
+  const setConnector = (connector: string) => setDraft({ connector });
   const [toast, setToast] = useState("");
   const session = saved.session;
   const setSession = (session: Charge) => setSaved((s) => ({ ...s, session }));
-  const [connector, setConnector] = useState("Tipo 2");
   const selected = saved.vehicles.find((v) => v.id === saved.selected) ?? null;
+  const simReady = !!selected;
   const vehicle = selected ?? sampleVehicle;
-  const energy =
-    Math.round(
-      ((Math.max(0, target - vehicle.battery) * vehicle.capacity) / 100) * 10,
-    ) / 10;
-  const minutes = Math.ceil((energy / 52.5) * 60);
-  const cost = Math.round(energy * 2.5 * 100) / 100;
-  const liveCharge = chargeSnapshot(session, {
+  const current = selected?.battery ?? 0;
+  const setCurrent = (battery: number) =>
+    setSaved((s) => ({
+      ...s,
+      vehicles: s.vehicles.map((v) =>
+        v.id === s.selected
+          ? { ...v, battery: Math.round(Math.max(0, Math.min(100, battery))) }
+          : v,
+      ),
+    }));
+  const selectedStation = station === null ? null : (stations[station] ?? null);
+  const stationConnector = selectedStation?.connectors.find(
+    (c) => c.type === connector,
+  );
+  const tariff = selectedStation?.price ?? 2.2;
+  const quote = calculateCharge(
     vehicle,
-    energy,
-    minutes,
-    cost,
     target,
     connector,
-  });
+    selectedStation ? (stationConnector?.powerKw ?? 0) : power,
+    tariff,
+  );
+  const { energy, minutes, cost } = quote;
+  const liveCharge = chargeSnapshot(
+    session,
+    {
+      vehicle,
+      energy,
+      minutes,
+      cost,
+      target,
+      connector,
+    },
+    clock,
+  );
   useEffect(() => {
     AsyncStorage.getItem("onze-mobi:v1")
       .then((value) => {
         if (value) {
           try {
-            setSaved({ ...initial, ...JSON.parse(value) });
+            const data = JSON.parse(value);
+            setSaved({
+              ...initial,
+              ...data,
+              vehicles: (data.vehicles ?? []).filter(
+                (v: Vehicle) => v.id !== "preview",
+              ),
+              selected: data.selected === "preview" ? null : data.selected,
+              draft: { ...initial.draft, ...data.draft },
+            });
           } catch {}
         }
       })
@@ -190,6 +280,33 @@ function useAppState() {
         () => {},
       );
   }, [saved, ready]);
+  useEffect(() => {
+    if (!saved.active) return;
+    const timer = setInterval(() => setClock(Date.now()), 3000);
+    return () => clearInterval(timer);
+  }, [saved.active]);
+  useEffect(() => {
+    const alarm = saved.alarm;
+    if (
+      !ready ||
+      !saved.active ||
+      !alarm ||
+      alarm.triggered ||
+      alarm.sessionId !== session?.id ||
+      liveCharge.battery < alarm.threshold
+    )
+      return;
+    const timer = setTimeout(() => {
+      setSaved((s) =>
+        s.alarm?.sessionId === alarm.sessionId
+          ? { ...s, alarm: { ...s.alarm, triggered: true } }
+          : s,
+      );
+      setAlarmRinging(true);
+      void deliverBatteryAlarm(alarm.threshold);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [ready, saved.active, saved.alarm, session?.id, liveCharge.battery]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 3500);
@@ -213,6 +330,24 @@ function useAppState() {
   const update = (patch: Partial<Saved>) =>
     setSaved((s) => ({ ...s, ...patch }));
   const start = () => {
+    if (!selected) {
+      setSheet("vehicle-picker");
+      return;
+    }
+    if (!selectedStation) {
+      go("map");
+      return;
+    }
+    if (!stationConnector || quote.powerKw <= 0) {
+      setToast("Escolha um conector compatível com seu veículo.");
+      return;
+    }
+    if (saved.active) {
+      setToast("Você já tem uma recarga em andamento.");
+      go("charging");
+      return;
+    }
+    if (target <= selected.battery || energy <= 0) { setToast("Selecione uma carga acima da bateria atual."); go("configure"); return; }
     const charge: Charge = {
       id: Date.now().toString(),
       station: stations[station ?? 0].name,
@@ -224,35 +359,56 @@ function useAppState() {
       initialBattery: vehicle.battery,
       targetBattery: target,
       connector,
-      powerKw: 60,
-      pricePerKwh: 2.5,
+      powerKw: quote.powerKw,
+      pricePerKwh: tariff,
       chargerId: `ONZE-${String((station ?? 0) + 1).padStart(3, "0")}`,
+      paymentLast4: saved.card,
+      demoProgress: 0,
     };
     setSession(charge);
-    update({ active: true });
+    setClock(Date.now());
+    update({ active: true, alarm: null });
     go("charging");
   };
   const finish = () => {
-    const charge = session ?? {
-      id: Date.now().toString(),
-      station: stations[station ?? 0].name,
-      energy,
-      minutes,
-      cost,
-      date: new Date().toISOString(),
+    if (!session || !saved.active) { setSheet(null); setToast("Não há uma recarga ativa para concluir."); return; }
+    const charge: Charge = {
+      ...(session ?? {
+        id: Date.now().toString(),
+        station: stations[station ?? 0].name,
+        energy,
+        minutes,
+        cost,
+        date: new Date().toISOString(),
+      }),
+      completedAt: new Date().toISOString(),
+      demoProgress: 1,
     };
     setSession(charge);
     setSaved((s) => ({
       ...s,
       active: false,
+      alarm: null,
+      vehicles: s.vehicles.map((v) =>
+        v.id === charge.vehicle?.id
+          ? { ...v, battery: charge.targetBattery ?? v.battery }
+          : v,
+      ),
       history: [charge, ...s.history.filter((c) => c.id !== charge.id)],
     }));
+    setReceipt(charge);
     go("success");
   };
-  const choose = (v: Vehicle) => {
+  const choose = (v: Vehicle, closeSheet = true) => {
     setSaved((saved) => ({
       ...saved,
       selected: v.id,
+      draft: {
+        ...saved.draft,
+        station: null,
+        connector: v.connector,
+        target: Math.min(100, Math.max(80, v.battery + 1)),
+      },
       trip: saved.trip.plan
         ? {
             ...saved.trip,
@@ -265,10 +421,52 @@ function useAppState() {
           }
         : saved.trip,
     }));
-    setCurrent(v.battery);
-    setTarget(Math.max(80, v.battery));
-    setSimReady(true);
-    setSheet(null);
+    if (closeSheet) setSheet(null);
+  };
+  const openVehicleForm = (
+    vehicle: Vehicle | null = null,
+    returnTo: "garage" | "vehicle-picker" | null = null,
+  ) => {
+    setEditing(vehicle);
+    setVehicleFormReturn(returnTo);
+    setSheet("vehicle-form");
+  };
+  const saveVehicle = (v: Vehicle) => {
+    setSaved((s) => ({
+      ...s,
+      vehicles: s.vehicles.some((old) => old.id === v.id)
+        ? s.vehicles.map((old) => (old.id === v.id ? v : old))
+        : [...s.vehicles, v],
+      selected: v.id,
+      draft: {
+        ...s.draft,
+        station: null,
+        connector: v.connector,
+        target: Math.min(100, Math.max(80, v.battery + 1)),
+      },
+    }));
+    setSheet(vehicleFormReturn);
+  };
+  const openReceipt = (charge: Charge | null = session) => {
+    setReceipt(charge);
+    setSheet("receipt");
+  };
+  const advanceDemo = (battery: number) => {
+    if (!session || !saved.active) return;
+    const start = session.initialBattery ?? vehicle.battery;
+    const end = session.targetBattery ?? target;
+    const elapsedProgress =
+      (Date.now() - new Date(session.date).getTime()) /
+      Math.max(1, session.minutes * 60000);
+    setSession({
+      ...session,
+      demoProgress: Math.max(
+        0,
+        Math.min(1, (battery - start) / Math.max(1, end - start)) -
+          elapsedProgress,
+      ),
+    });
+    setClock(Date.now());
   };
   return {
     route,
@@ -288,7 +486,6 @@ function useAppState() {
     current,
     setCurrent,
     simReady,
-    setSimReady,
     power,
     setPower,
     time,
@@ -307,6 +504,18 @@ function useAppState() {
     connector,
     setConnector,
     liveCharge,
+    selectedStation,
+    stationConnector,
+    tariff,
+    quote,
+    openVehicleForm,
+    saveVehicle,
+    vehicleFormReturn,
+    receipt,
+    openReceipt,
+    alarmRinging,
+    setAlarmRinging,
+    advanceDemo,
   };
 }
 type AppContext = ReturnType<typeof useAppState>;
